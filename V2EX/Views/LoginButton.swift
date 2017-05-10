@@ -21,16 +21,8 @@ class LoginButton: UIButton {
         layer.masksToBounds = false
         layer.shadowColor = UIColor.black.cgColor
         layer.shadowOpacity = 0.1
-        layer.shadowOffset = CGSize(width: 0, height: 1)
+        layer.shadowOffset = CGSize(width: 0, height: 0)
         layer.shadowRadius = 1
     }
 }
 
-extension Reactive where Base: LoginButton {
-    var isLoginEnabled: UIBindingObserver<Base, Bool> {
-        return UIBindingObserver(UIElement: self.base) { button, value in
-            button.isEnabled = value
-            button.layer.borderColor = value ? #colorLiteral(red: 0.2509803922, green: 0.2509803922, blue: 0.2509803922, alpha: 1).cgColor :  #colorLiteral(red: 0.8235294118, green: 0.8235294118, blue: 0.8235294118, alpha: 1).cgColor
-        }
-    }
-}

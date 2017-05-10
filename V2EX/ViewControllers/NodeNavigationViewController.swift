@@ -23,6 +23,8 @@ class NodeNavigationViewController: UITableViewController {
         navigationItem.title = "节点导航"
         navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
         
+        tableView.backgroundColor = AppStyle.shared.theme.tableBackgroundColor
+        tableView.separatorColor = AppStyle.shared.theme.separatorColor
         tableView.rowHeight = UITableViewAutomaticDimension
         tableView.estimatedRowHeight = 90
     }
@@ -45,6 +47,13 @@ extension NodeNavigationViewController {
     
     override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         return navigationItems[section].name
+    }
+    
+    override func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
+        if view is UITableViewHeaderFooterView {
+            let header = view as! UITableViewHeaderFooterView
+            header.textLabel?.textColor = AppStyle.shared.theme.black153Color
+        }
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {

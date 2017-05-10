@@ -29,6 +29,9 @@ class NodeTopicsViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
+        
+        tableView.backgroundColor = AppStyle.shared.theme.tableBackgroundColor
+        tableView.separatorColor = AppStyle.shared.theme.separatorColor
         tableView.rowHeight = UITableViewAutomaticDimension
         tableView.estimatedRowHeight = 90
         tableView.dataSource = nil
@@ -47,14 +50,12 @@ class NodeTopicsViewController: UITableViewController {
             return cell
             }.addDisposableTo(disposeBag)
         
-        tableView.rx.modelSelected(Topic.self).subscribe(onNext: {[weak navigationController] item in
-            if let nav = navigationController {
-                TopicDetailsViewController.show(from: nav, topic: item)
-            }
-        }).addDisposableTo(disposeBag)
-        
         tableView.addInfiniteScrolling {[weak viewModel] in
             viewModel?.fetchMoreData()
+        }
+        
+        if AppStyle.shared.theme == .night {
+            tableView.infiniteScrollingView?.activityIndicatorView.activityIndicatorViewStyle = .white
         }
         
         viewModel.loadMoreEnabled.asObservable().bind(to: tableView.rx.showsInfiniteScrolling).addDisposableTo(disposeBag)
@@ -67,15 +68,25 @@ class NodeTopicsViewController: UITableViewController {
         viewModel.loadingActivityIndicator.asObservable().subscribe(onNext: {[weak self] isLoading in
             guard let `self` = self else { return }
             if isLoading {
-                let activityIndicator = UIActivityIndicatorView(activityIndicatorStyle: .gray)
+                let activityIndicator = UIActivityIndicatorView(activityIndicatorStyle: AppStyle.shared.theme.activityIndicatorStyle)
                 activityIndicator.startAnimating()
                 self.navigationItem.rightBarButtonItem = UIBarButtonItem(customView: activityIndicator)
             }else {
-                if Account.shared.isLoggedIn.value {
-                    self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: #imageLiteral(resourceName: "nav_more"), style: .plain, target: self, action: #selector(self.moreAction(_:)))
-                }else {
-                    self.navigationItem.rightBarButtonItem = nil
-                }
+                self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: #imageLiteral(resourceName: "nav_more"), style: .plain, target: self, action: #selector(self.moreAction(_:)))
+            }
+        }).addDisposableTo(disposeBag)
+        
+        var shouldLogin = false
+        viewModel.shouldLogin.asObservable().subscribe(onNext: {[weak self] should in
+            if should {
+                shouldLogin = true
+                self?.showLoginAlert(isPopBack: true)
+            }
+        }).addDisposableTo(disposeBag)
+        
+        Account.shared.isLoggedIn.asObservable().subscribe(onNext: {isLoggedIn in
+            if isLoggedIn && shouldLogin {
+                self.viewModel.fetcData()
             }
         }).addDisposableTo(disposeBag)
     }
@@ -129,5 +140,9 @@ extension NodeTopicsViewController: CreateTopicViewControllerDelegate {
 extension NodeTopicsViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
+        let item = viewModel.items.value[indexPath.row]
+        if let nav = navigationController {
+            TopicDetailsViewController.show(from: nav, topic: item)
+        }
     }
 }

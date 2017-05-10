@@ -42,6 +42,18 @@ class TopicDetailsCommentCell: UITableViewCell {
         }
     }
     
+    private var cssText = "a:link, a:visited, a:active {" +
+                            "text-decoration: none;" +
+                            "word-break: break-all;" +
+                    "}" +
+                    ".reply_content {" +
+                            "font-size: 14px;" +
+                            "line-height: 1.6;" +
+                            "color: #reply_content#;" +
+                            "word-break: break-all;" +
+                            "word-wrap: break-word;" +
+                    "}"
+    
     override func awakeFromNib() {
         super.awakeFromNib()
         // Initialization code
@@ -50,7 +62,7 @@ class TopicDetailsCommentCell: UITableViewCell {
         
         textView.textContainerInset = UIEdgeInsets(top: 0, left: 0, bottom: -18, right: 0)
         textView.textContainer.lineFragmentPadding = 0
-        textView.linkTextAttributes = [NSForegroundColorAttributeName: #colorLiteral(red: 0.4666666667, green: 0.5019607843, blue: 0.5294117647, alpha: 1)]
+        textView.linkTextAttributes = [NSForegroundColorAttributeName: AppStyle.shared.theme.hyperlinkColor]
         textView.delegate = self
         
         avatarView.isUserInteractionEnabled = true
@@ -63,6 +75,19 @@ class TopicDetailsCommentCell: UITableViewCell {
         
         let cellTap = UITapGestureRecognizer(target: self, action: #selector(cellTapAction(_:)))
         addGestureRecognizer(cellTap)
+        
+        let selectedView = UIView()
+        selectedView.backgroundColor = AppStyle.shared.theme.cellSelectedBackgroundColor
+        self.selectedBackgroundView = selectedView
+        
+        backgroundColor = AppStyle.shared.theme.cellBackgroundColor
+        contentView.backgroundColor = backgroundColor
+        textView.backgroundColor = backgroundColor
+        nameLabel.textColor = AppStyle.shared.theme.black64Color
+        timeLabel.textColor = AppStyle.shared.theme.black153Color
+        floorLabel.textColor = AppStyle.shared.theme.black153Color
+        
+        cssText = cssText.replacingOccurrences(of: CSSColorMark.replyContent, with: AppStyle.shared.theme.webTopicTextColorHex)
     }
     
     func cellTapAction(_ sender: Any) {
@@ -87,7 +112,7 @@ class TopicDetailsCommentCell: UITableViewCell {
         timeLabel.text = model.time
         
         var content = model.content
-        
+
         guard let html = HTML(html: content, encoding: .utf8) else {
             textView.text = content
             return
@@ -100,10 +125,14 @@ class TopicDetailsCommentCell: UITableViewCell {
             let id = "\(img.hashValue)"
             if let index = srcs.index(where: {img.contains($0)}) {
                 content = content.replacingOccurrences(of: img, with: id)
-                imgsrcs.append((id, srcs[index]))
+                var src = srcs[index]
+                if src.hasPrefix("//") {
+                    src = "http:" + src
+                }
+                imgsrcs.append((id, src))
             }
         })
-        let htmlText = "<style>\(AppStyle.shared.css)</style>" + content
+        let htmlText = "<style>\(cssText)</style>" + content
         if let htmlData = htmlText.data(using: .unicode) {
             do {
                 let attributedString = try NSMutableAttributedString(data: htmlData, options: [NSDocumentTypeDocumentAttribute: NSHTMLTextDocumentType], documentAttributes: nil)
@@ -118,7 +147,7 @@ class TopicDetailsCommentCell: UITableViewCell {
                         image = cacheImage
                         imgSize = cacheImage.size
                     }else {
-                        image = UIImage(color: #colorLiteral(red: 0.8039215803, green: 0.8039215803, blue: 0.8039215803, alpha: 1), size: imgSize)
+                        image = UIImage(color: AppStyle.shared.theme.topicCellNodeBackgroundColor, size: imgSize)
                     }
                     
                     let attachment = ImageAttachment()
